@@ -18,7 +18,7 @@ async function run() {
   })
 
   const query =
-    'Tell me about object pooling technique and how it could help to save memory in Javascript'
+    'Explain to me how uselayoutEffect hook works, tell me how it differs from useEffect and provide some code examples'
 
   const response = await callVectorDBQAChain(query, vectorStore)
   console.log('Answer:\n', response.text)

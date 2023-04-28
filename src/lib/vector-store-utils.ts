@@ -1,8 +1,9 @@
-import { OpenAIEmbeddings } from 'langchain/embeddings'
-import { OpenAI } from 'langchain/llms'
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+import { OpenAI } from 'langchain/llms/openai'
 import { loadQAChain } from 'langchain/chains'
 import { Document } from 'langchain/document'
 import { SupabaseVectorStore } from 'langchain/vectorstores/supabase'
+import { initSupabase } from './create-supabase-cli'
 
 type PineConeMetadata = Record<string, any>
 
@@ -13,7 +14,7 @@ export async function callVectorDBQAChain(
   index: SupabaseVectorStore
 ) {
   const question = query
-  const returnedResults = 3
+  const returnedResults = 30
   const questionEmbedding = await embedQuery(question, embeddings)
   const docs = await similarityVectorSearch(
     questionEmbedding,
@@ -63,4 +64,57 @@ export async function similarityVectorSearch(
   }
 
   return result.map((result) => result[0])
+}
+
+type UploadDocsToDb =
+  | {
+      sourceType: 'fromText'
+      strings: { pageContent: string; metadata: any }[]
+    }
+  | {
+      sourceType: 'fromDocuments'
+      documents: Document<Record<string, any>>[][]
+    }
+
+export const uploadDocumentsToDb = async (config: UploadDocsToDb) => {
+  if (!config) {
+    throw new Error('No config provided for upload')
+  }
+
+  const { dbConfig } = initSupabase() || {}
+
+  if (!dbConfig) {
+    throw new Error('Supabase db config is not defined')
+  }
+
+  const processedDocs: Promise<SupabaseVectorStore>[] = []
+
+  if (config.sourceType === 'fromDocuments') {
+    // TODO:add logs, take a lot of time
+    config.documents.forEach((document) => {
+      processedDocs.push(
+        SupabaseVectorStore.fromDocuments(
+          document,
+          new OpenAIEmbeddings(),
+          dbConfig
+        )
+      )
+    })
+  } else {
+    config.strings.forEach((string) => {
+      processedDocs.push(
+        SupabaseVectorStore.fromTexts(
+          // FIXME:
+          string.pageContent,
+          string.metadata,
+          new OpenAIEmbeddings(),
+          dbConfig
+        )
+      )
+    })
+  }
+
+  await Promise.all(processedDocs)
+
+  console.log('Successfully loaded all the docs')
 }

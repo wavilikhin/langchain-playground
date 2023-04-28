@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npx tsx -r dotenv-safe/config src/index.ts"
+    "start": "npx tsx -r dotenv-safe/config src/query-from-db.ts"
   },
   "keywords": [],
   "author": "",

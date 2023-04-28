@@ -1,7 +1,6 @@
 import { Chroma } from 'langchain/vectorstores/chroma'
 import type { Document } from 'langchain/dist/document'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
-import { ChromaClient } from 'chromadb'
 
 export const embedDocsToStore = async (
   docs: Document<Record<string, any>>[][]

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import { SupabaseVectorStore } from 'langchain/vectorstores/supabase'
 import { initSupabase } from './lib/create-supabase-cli'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+import { uploadDocumentsToDb } from './lib/vector-store-utils'
 
 config()
 
@@ -23,18 +24,8 @@ const run = async () => {
     throw new Error('No documents provided')
   }
 
-  const processedDocs: Promise<SupabaseVectorStore>[] = []
-  docs.forEach((doc) => {
-    processedDocs.push(
-      SupabaseVectorStore.fromDocuments(doc, new OpenAIEmbeddings(), dbConfig)
-    )
-  })
+  await uploadDocumentsToDb(docs)
 
-  const dbUploadResults = await Promise.all(processedDocs)
-
-  console.log(dbUploadResults[0])
-
-  console.log('Successfully loaded all the docs')
   process.exit(0)
 }
 
